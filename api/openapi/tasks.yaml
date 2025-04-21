@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: Async Task Service
+  version: 1.0.0
+  description: API for managing long-running I/O server tasks
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Tasks
+    description: Operations with async tasks
+
+paths:
+  /tasks:
+    post:
+      tags: [Tasks]
+      summary: Create new async task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '202':
+          description: Task accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTaskResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/{id}:
+    get:
+      tags: [Tasks]
+      summary: Get task status and result
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatus'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Invalid ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    CreateTaskRequest:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          example: long_io_task
+          description: Task type identifier
+        params:
+          type: object
+          additionalProperties: true
+          description: Task-specific parameters
+          example: {"url": "https://example.com/data"}
+
+    CreateTaskResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status_url:
+          type: string
+          example: "/tasks/550e8400-e29b-41d4-a716-446655440000"
+
+    TaskStatus:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, done, failed]
+        result:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Task not found"
+        code:
+          type: integer
+          example: 404
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
