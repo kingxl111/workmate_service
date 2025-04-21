@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/kingxl111/workmate_service/internal/config"
+	pg "github.com/kingxl111/workmate_service/internal/storage/postgres"
 	"log/slog"
 	"net/http"
 	"os"
@@ -46,7 +47,7 @@ func runMain(ctx context.Context) error {
 		return fmt.Errorf("pg config: %w", err)
 	}
 
-	db, err := postgres.NewDB(
+	db, err := pg.NewDB(
 		pgConfig.Username,
 		pgConfig.Password,
 		pgConfig.Host,
@@ -70,7 +71,7 @@ func runMain(ctx context.Context) error {
 	var h slog.Handler = slog.NewTextHandler(os.Stdout, handleOpts)
 	logger := slog.New(h)
 
-	repo := postgres.NewRepository(db)
+	repo := pg.NewRepository(db)
 	shopSrv := shop.NewShopService(repo)
 	userSrv := usrs.NewUserService(repo, repo)
 
